@@ -1,73 +1,74 @@
-# MVP Foundation Vertical Slice Implementation Plan
+# MVP 基盤縦スライス実装計画
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **エージェント作業者向け:** 必須サブスキル: この計画をタスク単位で実装する場合は、`superpowers:subagent-driven-development`（推奨）または `superpowers:executing-plans` を使うこと。進捗管理にはチェックボックス（`- [ ]`）を使う。
 
-**Goal:** Build the first full-stack vertical slice: project foundation, shared domain contracts, PostgreSQL/Prisma schema, Fastify/Socket.IO backend, and a basic Next.js UI for room creation, joining, lobby display, game start, answer enqueue, correct answer, skip, and result display.
+**目的:** 最初のフルスタック縦スライスとして、プロジェクト基盤、共有ドメイン契約、PostgreSQL/Prisma スキーマ、Fastify/Socket.IO バックエンド、ルーム作成・参加・ロビー表示・ゲーム開始・解答キュー・正解判定・スキップ・結果表示の基本 Next.js UI を作る。
 
-**Architecture:** Use a TypeScript monorepo with separate `apps/web`, `apps/server`, `packages/shared`, and `packages/game-core` workspaces. The server owns game state in memory, persists durable room/result records through Prisma, and emits per-participant Socket.IO snapshots. The web app sends commands and renders server snapshots without deciding game outcomes locally.
+**アーキテクチャ:** `apps/web`、`apps/server`、`packages/shared`、`packages/game-core` に分けた TypeScript モノレポ構成にする。サーバはゲーム状態をメモリ上で所有し、永続化すべきルーム・結果情報を Prisma 経由で保存し、参加者ごとの Socket.IO スナップショットを配信する。Web アプリはコマンド送信とスナップショット描画に集中し、ゲーム結果をローカルでは確定しない。
 
-**Tech Stack:** pnpm workspaces, TypeScript, Next.js, React, Fastify, Socket.IO, PostgreSQL, Prisma, Vitest, Docker Compose, GitHub Actions.
+**技術スタック:** pnpm workspaces、TypeScript、Next.js、React、Fastify、Socket.IO、PostgreSQL、Prisma、Vitest、Docker Compose、GitHub Actions。
 
 ---
 
-## Scope Check
+## スコープ確認
 
-The approved architecture spec covers multiple implementation areas. This plan deliberately covers the first vertical slice only, so the project becomes runnable and testable across all layers.
+承認済みのアーキテクチャ spec は複数の実装領域を含む。この計画では、全レイヤーをまたいで実行・テストできる状態を最短で作るため、最初の縦スライスだけを対象にする。
 
-Covered in this plan:
+この計画で扱う範囲:
 
-- Monorepo and tooling setup
-- Shared validation and public contracts
-- Game-core state machine for lobby, start, answer queue, correct answer, incorrect answer, skip, and result
-- Prisma schema for rooms, participants, and game results
-- Fastify REST endpoints for create, join, resume, and health
-- Socket.IO commands for joining a room channel, starting a game, enqueueing an answer, judging an answer, and skipping a turn
-- Next.js basic UI for create/join/lobby/game/result
-- CI and README foundation
+- モノレポとツール設定
+- 共有バリデーションと公開契約
+- ロビー、開始、解答キュー、正解、不正解、スキップ、結果までの game-core 状態機械
+- ルーム、参加者、ゲーム結果の Prisma スキーマ
+- 作成、参加、再接続、ヘルスチェック用の Fastify REST エンドポイント
+- ルームチャンネル参加、ゲーム開始、解答キュー登録、正誤判定、スキップ用の Socket.IO コマンド
+- 作成、参加、ロビー、ゲーム、結果の基本 Next.js UI
+- CI と README の土台
 
-Not covered in this plan:
+この計画では扱わない範囲:
 
-- Hand-drawn avatar editor
-- Accusation, speaker response, and vote flow
-- Host transfer
-- Offline voter handling
-- Production deployment
+- 手描きアバターエディタ
+- 指摘、説明者の応答、投票フロー
+- ホスト移譲
+- 投票者のオフライン処理
+- 本番デプロイ
 - Redis adapter
-- User account authentication
+- ユーザーアカウント認証
 
-Those areas should each get a focused follow-up plan after this slice runs end to end.
+これらは、この縦スライスがエンドツーエンドで動いてから、それぞれ焦点を絞った後続計画として扱う。
 
-## File Structure
+## ファイル構成
 
-- `package.json` - root workspace scripts
-- `pnpm-workspace.yaml` - workspace package list
-- `tsconfig.base.json` - shared TypeScript defaults
-- `.editorconfig` - editor formatting defaults
-- `.env.example` - documented environment variables
-- `docker-compose.yml` - local PostgreSQL
-- `.github/workflows/ci.yml` - lint, typecheck, test, Prisma validation
-- `packages/shared` - cross-app validation and API/socket contract types
-- `packages/game-core` - pure game state machine and tests
-- `apps/server` - Fastify, Socket.IO, Prisma, in-memory room runtime
-- `apps/web` - Next.js UI and Socket.IO client
-- `README.md` - setup, scripts, architecture notes
+- `package.json` - ルートのワークスペーススクリプト
+- `pnpm-workspace.yaml` - ワークスペースパッケージ一覧
+- `tsconfig.base.json` - 共通 TypeScript 設定
+- `.editorconfig` - エディタ整形設定
+- `.env.example` - 環境変数のサンプル
+- `docker-compose.yml` - ローカル PostgreSQL
+- `.github/workflows/ci.yml` - lint、typecheck、test、Prisma 検証
+- `packages/shared` - アプリ横断のバリデーションと API/socket 契約型
+- `packages/game-core` - 純粋なゲーム状態機械とテスト
+- `apps/server` - Fastify、Socket.IO、Prisma、メモリ上のルーム実行時状態
+- `apps/web` - Next.js UI と Socket.IO クライアント
+- `README.md` - セットアップ、スクリプト、アーキテクチャメモ
 
 ---
 
-### Task 1: Workspace Foundation
+### タスク 1: ワークスペース基盤
 
-**Files:**
-- Create: `package.json`
-- Create: `pnpm-workspace.yaml`
-- Create: `tsconfig.base.json`
-- Create: `.editorconfig`
-- Create: `.env.example`
-- Create: `docker-compose.yml`
-- Create: `.gitignore` additions if missing
+**対象ファイル:**
 
-- [ ] **Step 1: Create root workspace files**
+- 作成: `package.json`
+- 作成: `pnpm-workspace.yaml`
+- 作成: `tsconfig.base.json`
+- 作成: `.editorconfig`
+- 作成: `.env.example`
+- 作成: `docker-compose.yml`
+- 作成: `.gitignore` に不足項目がある場合は追記
 
-Write `package.json`:
+- [ ] **ステップ 1: ルートのワークスペースファイルを作成する**
+
+`package.json` を作成する:
 
 ```json
 {
@@ -91,7 +92,7 @@ Write `package.json`:
 }
 ```
 
-Write `pnpm-workspace.yaml`:
+`pnpm-workspace.yaml` を作成する:
 
 ```yaml
 packages:
@@ -99,7 +100,7 @@ packages:
   - "packages/*"
 ```
 
-Write `tsconfig.base.json`:
+`tsconfig.base.json` を作成する:
 
 ```json
 {
@@ -120,7 +121,7 @@ Write `tsconfig.base.json`:
 }
 ```
 
-Write `.editorconfig`:
+`.editorconfig` を作成する:
 
 ```ini
 root = true
@@ -134,7 +135,7 @@ indent_size = 2
 trim_trailing_whitespace = true
 ```
 
-Write `.env.example`:
+`.env.example` を作成する:
 
 ```dotenv
 DATABASE_URL="postgresql://katakanon:katakanon@localhost:5432/katakanon?schema=public"
@@ -143,7 +144,7 @@ WEB_ORIGIN="http://localhost:3000"
 NEXT_PUBLIC_SERVER_URL="http://localhost:4000"
 ```
 
-Write `docker-compose.yml`:
+`docker-compose.yml` を作成する:
 
 ```yaml
 services:
@@ -167,9 +168,9 @@ volumes:
   postgres-data:
 ```
 
-- [ ] **Step 2: Make sure `.gitignore` covers generated files**
+- [ ] **ステップ 2: `.gitignore` が生成物を除外することを確認する**
 
-Ensure `.gitignore` contains these entries:
+`.gitignore` に次の項目が含まれていることを確認する:
 
 ```gitignore
 node_modules/
@@ -181,28 +182,28 @@ coverage/
 *.tsbuildinfo
 ```
 
-- [ ] **Step 3: Install dependencies**
+- [ ] **ステップ 3: 依存関係をインストールする**
 
-Run:
+実行:
 
 ```powershell
 corepack enable
 pnpm install
 ```
 
-Expected: `pnpm-lock.yaml` is created and the install exits with code 0.
+期待結果: `pnpm-lock.yaml` が作成され、install が終了コード 0 で完了する。
 
-- [ ] **Step 4: Verify empty workspace scripts fail only because child packages do not exist yet**
+- [ ] **ステップ 4: 子パッケージ未作成だけが理由で空ワークスペースのスクリプトが失敗することを確認する**
 
-Run:
+実行:
 
 ```powershell
 pnpm typecheck
 ```
 
-Expected: pnpm reports no matching workspace packages or no package scripts. This is acceptable before Task 2 creates packages.
+期待結果: pnpm が一致する workspace package なし、または package script なしを報告する。タスク 2 でパッケージを作成する前なので許容する。
 
-- [ ] **Step 5: Commit workspace foundation**
+- [ ] **ステップ 5: ワークスペース基盤をコミットする**
 
 ```powershell
 git add package.json pnpm-workspace.yaml tsconfig.base.json .editorconfig .env.example docker-compose.yml .gitignore pnpm-lock.yaml
@@ -211,19 +212,20 @@ git commit -m "chore: add workspace foundation"
 
 ---
 
-### Task 2: Shared Contracts And Display Name Validation
+### タスク 2: 共有契約とプレイヤーネーム検証
 
-**Files:**
-- Create: `packages/shared/package.json`
-- Create: `packages/shared/tsconfig.json`
-- Create: `packages/shared/src/displayName.test.ts`
-- Create: `packages/shared/src/displayName.ts`
-- Create: `packages/shared/src/contracts.ts`
-- Create: `packages/shared/src/index.ts`
+**対象ファイル:**
 
-- [ ] **Step 1: Create package metadata**
+- 作成: `packages/shared/package.json`
+- 作成: `packages/shared/tsconfig.json`
+- 作成: `packages/shared/src/displayName.test.ts`
+- 作成: `packages/shared/src/displayName.ts`
+- 作成: `packages/shared/src/contracts.ts`
+- 作成: `packages/shared/src/index.ts`
 
-Write `packages/shared/package.json`:
+- [ ] **ステップ 1: パッケージメタデータを作成する**
+
+`packages/shared/package.json` を作成する:
 
 ```json
 {
@@ -244,7 +246,7 @@ Write `packages/shared/package.json`:
 }
 ```
 
-Write `packages/shared/tsconfig.json`:
+`packages/shared/tsconfig.json` を作成する:
 
 ```json
 {
@@ -256,9 +258,9 @@ Write `packages/shared/tsconfig.json`:
 }
 ```
 
-- [ ] **Step 2: Write failing display name tests**
+- [ ] **ステップ 2: 失敗するプレイヤーネーム検証テストを書く**
 
-Write `packages/shared/src/displayName.test.ts`:
+`packages/shared/src/displayName.test.ts` を作成する:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -266,13 +268,16 @@ import { validateDisplayName } from "./displayName";
 
 describe("validateDisplayName", () => {
   it("trims leading and trailing spaces", () => {
-    expect(validateDisplayName("  たろう  ")).toEqual({ ok: true, value: "たろう" });
+    expect(validateDisplayName("  たろう  ")).toEqual({
+      ok: true,
+      value: "たろう",
+    });
   });
 
   it("rejects blank names after trimming", () => {
     expect(validateDisplayName("　 ㅤ ")).toEqual({
       ok: false,
-      error: "display_name_required"
+      error: "display_name_required",
     });
   });
 
@@ -280,32 +285,32 @@ describe("validateDisplayName", () => {
     const value = "あ".repeat(33);
     expect(validateDisplayName(value)).toEqual({
       ok: false,
-      error: "display_name_too_long"
+      error: "display_name_too_long",
     });
   });
 
   it("rejects control characters", () => {
     expect(validateDisplayName("a\nb")).toEqual({
       ok: false,
-      error: "display_name_control_character"
+      error: "display_name_control_character",
     });
   });
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **ステップ 3: テストを実行して失敗を確認する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/shared test
 ```
 
-Expected: FAIL because `./displayName` does not exist.
+期待結果: `./displayName` が存在しないため FAIL。
 
-- [ ] **Step 4: Add display name implementation and contracts**
+- [ ] **ステップ 4: プレイヤーネーム検証実装と契約型を追加する**
 
-Write `packages/shared/src/displayName.ts`:
+`packages/shared/src/displayName.ts` を作成する:
 
 ```ts
 export type DisplayNameError =
@@ -339,7 +344,7 @@ export function validateDisplayName(input: string): DisplayNameResult {
 }
 ```
 
-Write `packages/shared/src/contracts.ts`:
+`packages/shared/src/contracts.ts` を作成する:
 
 ```ts
 export type ParticipantId = string;
@@ -387,25 +392,25 @@ export type ParticipantCredentials = {
 };
 ```
 
-Write `packages/shared/src/index.ts`:
+`packages/shared/src/index.ts` を作成する:
 
 ```ts
 export * from "./contracts";
 export * from "./displayName";
 ```
 
-- [ ] **Step 5: Run shared tests**
+- [ ] **ステップ 5: shared のテストを実行する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/shared test
 pnpm --filter @katakanon/shared typecheck
 ```
 
-Expected: both commands PASS.
+期待結果: 両方のコマンドが PASS。
 
-- [ ] **Step 6: Commit shared contracts**
+- [ ] **ステップ 6: 共有契約をコミットする**
 
 ```powershell
 git add packages/shared
@@ -414,18 +419,19 @@ git commit -m "feat: add shared contracts"
 
 ---
 
-### Task 3: Game Core State Machine
+### タスク 3: game-core 状態機械
 
-**Files:**
-- Create: `packages/game-core/package.json`
-- Create: `packages/game-core/tsconfig.json`
-- Create: `packages/game-core/src/game.test.ts`
-- Create: `packages/game-core/src/game.ts`
-- Create: `packages/game-core/src/index.ts`
+**対象ファイル:**
 
-- [ ] **Step 1: Create game-core package metadata**
+- 作成: `packages/game-core/package.json`
+- 作成: `packages/game-core/tsconfig.json`
+- 作成: `packages/game-core/src/game.test.ts`
+- 作成: `packages/game-core/src/game.ts`
+- 作成: `packages/game-core/src/index.ts`
 
-Write `packages/game-core/package.json`:
+- [ ] **ステップ 1: game-core のパッケージメタデータを作成する**
+
+`packages/game-core/package.json` を作成する:
 
 ```json
 {
@@ -449,7 +455,7 @@ Write `packages/game-core/package.json`:
 }
 ```
 
-Write `packages/game-core/tsconfig.json`:
+`packages/game-core/tsconfig.json` を作成する:
 
 ```json
 {
@@ -461,9 +467,9 @@ Write `packages/game-core/tsconfig.json`:
 }
 ```
 
-- [ ] **Step 2: Write failing game flow tests**
+- [ ] **ステップ 2: 失敗するゲーム進行テストを書く**
 
-Write `packages/game-core/src/game.test.ts`:
+`packages/game-core/src/game.test.ts` を作成する:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -474,13 +480,13 @@ import {
   joinRoom,
   makeSnapshot,
   skipTurn,
-  startGame
+  startGame,
 } from "./game";
 
 const words = [
   { id: "w1", surface: "ラーメン" },
   { id: "w2", surface: "テレビ" },
-  { id: "w3", surface: "コンビニ" }
+  { id: "w3", surface: "コンビニ" },
 ];
 
 function roomWithThreePlayers() {
@@ -490,19 +496,19 @@ function roomWithThreePlayers() {
     hostParticipantId: "p1",
     hostDisplayName: "ホスト",
     rounds: 1,
-    now: "2026-04-26T00:00:00.000Z"
+    now: "2026-04-26T00:00:00.000Z",
   });
 
   const joined2 = joinRoom(room, {
     participantId: "p2",
     displayName: "参加者2",
-    now: "2026-04-26T00:00:01.000Z"
+    now: "2026-04-26T00:00:01.000Z",
   });
 
   return joinRoom(joined2, {
     participantId: "p3",
     displayName: "参加者3",
-    now: "2026-04-26T00:00:02.000Z"
+    now: "2026-04-26T00:00:02.000Z",
   });
 }
 
@@ -510,7 +516,7 @@ describe("game core", () => {
   it("starts a game with three online players and hides the word from non-speakers", () => {
     const room = startGame(roomWithThreePlayers(), {
       words,
-      orderedSpeakerIds: ["p1", "p2", "p3"]
+      orderedSpeakerIds: ["p1", "p2", "p3"],
     });
 
     expect(room.phase).toBe("turn");
@@ -526,34 +532,36 @@ describe("game core", () => {
       hostParticipantId: "p1",
       hostDisplayName: "ホスト",
       rounds: 1,
-      now: "2026-04-26T00:00:00.000Z"
+      now: "2026-04-26T00:00:00.000Z",
     });
 
     expect(() => startGame(room, { words, orderedSpeakerIds: ["p1"] })).toThrow(
-      "minimum_three_online_players_required"
+      "minimum_three_online_players_required",
     );
   });
 
   it("queues each answerer only once", () => {
     const room = startGame(roomWithThreePlayers(), {
       words,
-      orderedSpeakerIds: ["p1", "p2", "p3"]
+      orderedSpeakerIds: ["p1", "p2", "p3"],
     });
 
     const queued = enqueueAnswer(room, "p2");
-    expect(enqueueAnswer(queued, "p2").currentTurn?.answerQueue).toEqual(["p2"]);
+    expect(enqueueAnswer(queued, "p2").currentTurn?.answerQueue).toEqual([
+      "p2",
+    ]);
   });
 
   it("adds one point to answerer and speaker on correct answer", () => {
     const started = startGame(roomWithThreePlayers(), {
       words,
-      orderedSpeakerIds: ["p1", "p2", "p3"]
+      orderedSpeakerIds: ["p1", "p2", "p3"],
     });
     const queued = enqueueAnswer(started, "p2");
     const next = judgeAnswer(queued, {
       speakerId: "p1",
       answererId: "p2",
-      result: "correct"
+      result: "correct",
     });
 
     expect(next.participants.find((p) => p.id === "p1")?.score).toBe(1);
@@ -565,13 +573,13 @@ describe("game core", () => {
   it("removes only the first answerer on incorrect answer", () => {
     const started = startGame(roomWithThreePlayers(), {
       words,
-      orderedSpeakerIds: ["p1", "p2", "p3"]
+      orderedSpeakerIds: ["p1", "p2", "p3"],
     });
     const queued = enqueueAnswer(enqueueAnswer(started, "p2"), "p3");
     const next = judgeAnswer(queued, {
       speakerId: "p1",
       answererId: "p2",
-      result: "incorrect"
+      result: "incorrect",
     });
 
     expect(next.currentTurn?.speakerId).toBe("p1");
@@ -581,7 +589,7 @@ describe("game core", () => {
   it("finishes after the final turn is skipped", () => {
     let room = startGame(roomWithThreePlayers(), {
       words,
-      orderedSpeakerIds: ["p1", "p2", "p3"]
+      orderedSpeakerIds: ["p1", "p2", "p3"],
     });
 
     room = skipTurn(room, "p1");
@@ -594,19 +602,19 @@ describe("game core", () => {
 });
 ```
 
-- [ ] **Step 3: Run test to verify it fails**
+- [ ] **ステップ 3: テストを実行して失敗を確認する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/game-core test
 ```
 
-Expected: FAIL because `./game` does not exist.
+期待結果: `./game` が存在しないため FAIL。
 
-- [ ] **Step 4: Implement the game core**
+- [ ] **ステップ 4: game-core を実装する**
 
-Write `packages/game-core/src/game.ts`:
+`packages/game-core/src/game.ts` を作成する:
 
 ```ts
 import type { ParticipantId, RoomCode, RoomSnapshot } from "@katakanon/shared";
@@ -663,18 +671,18 @@ export function createRoom(input: {
         score: 0,
         isHost: true,
         isOnline: true,
-        joinedAt: input.now
-      }
+        joinedAt: input.now,
+      },
     ],
     speakerOrder: [],
     wordDeck: [],
-    usedWordIds: []
+    usedWordIds: [],
   };
 }
 
 export function joinRoom(
   room: GameRoom,
-  input: { participantId: ParticipantId; displayName: string; now: string }
+  input: { participantId: ParticipantId; displayName: string; now: string },
 ): GameRoom {
   if (room.phase !== "lobby") {
     throw new Error("room_not_joinable");
@@ -690,17 +698,19 @@ export function joinRoom(
         score: 0,
         isHost: false,
         isOnline: true,
-        joinedAt: input.now
-      }
-    ]
+        joinedAt: input.now,
+      },
+    ],
   };
 }
 
 export function startGame(
   room: GameRoom,
-  input: { words: Word[]; orderedSpeakerIds: ParticipantId[] }
+  input: { words: Word[]; orderedSpeakerIds: ParticipantId[] },
 ): GameRoom {
-  const onlineParticipants = room.participants.filter((participant) => participant.isOnline);
+  const onlineParticipants = room.participants.filter(
+    (participant) => participant.isOnline,
+  );
   const requiredWordCount = onlineParticipants.length * room.rounds;
 
   if (onlineParticipants.length < 3) {
@@ -712,16 +722,23 @@ export function startGame(
   }
 
   const speakerOrder = input.orderedSpeakerIds;
-  return beginTurn({
-    ...room,
-    phase: "turn",
-    speakerOrder,
-    wordDeck: input.words,
-    usedWordIds: []
-  }, 0, 0);
+  return beginTurn(
+    {
+      ...room,
+      phase: "turn",
+      speakerOrder,
+      wordDeck: input.words,
+      usedWordIds: [],
+    },
+    0,
+    0,
+  );
 }
 
-export function enqueueAnswer(room: GameRoom, participantId: ParticipantId): GameRoom {
+export function enqueueAnswer(
+  room: GameRoom,
+  participantId: ParticipantId,
+): GameRoom {
   const turn = requireTurn(room);
 
   if (participantId === turn.speakerId) {
@@ -736,14 +753,18 @@ export function enqueueAnswer(room: GameRoom, participantId: ParticipantId): Gam
     ...room,
     currentTurn: {
       ...turn,
-      answerQueue: [...turn.answerQueue, participantId]
-    }
+      answerQueue: [...turn.answerQueue, participantId],
+    },
   };
 }
 
 export function judgeAnswer(
   room: GameRoom,
-  input: { speakerId: ParticipantId; answererId: ParticipantId; result: "correct" | "incorrect" }
+  input: {
+    speakerId: ParticipantId;
+    answererId: ParticipantId;
+    result: "correct" | "incorrect";
+  },
 ): GameRoom {
   const turn = requireTurn(room);
 
@@ -760,13 +781,16 @@ export function judgeAnswer(
       ...room,
       currentTurn: {
         ...turn,
-        answerQueue: turn.answerQueue.slice(1)
-      }
+        answerQueue: turn.answerQueue.slice(1),
+      },
     };
   }
 
   const participants = room.participants.map((participant) => {
-    if (participant.id === input.speakerId || participant.id === input.answererId) {
+    if (
+      participant.id === input.speakerId ||
+      participant.id === input.answererId
+    ) {
       return { ...participant, score: participant.score + 1 };
     }
     return participant;
@@ -785,10 +809,15 @@ export function skipTurn(room: GameRoom, speakerId: ParticipantId): GameRoom {
   return advanceTurn(room);
 }
 
-export function makeSnapshot(room: GameRoom, viewerId: ParticipantId): RoomSnapshot {
+export function makeSnapshot(
+  room: GameRoom,
+  viewerId: ParticipantId,
+): RoomSnapshot {
   const turn = room.currentTurn;
   const speakerId = turn?.speakerId ?? null;
-  const viewer = room.participants.find((participant) => participant.id === viewerId);
+  const viewer = room.participants.find(
+    (participant) => participant.id === viewerId,
+  );
 
   if (!viewer) {
     throw new Error("viewer_not_found");
@@ -799,7 +828,7 @@ export function makeSnapshot(room: GameRoom, viewerId: ParticipantId): RoomSnaps
     displayName: participant.displayName,
     score: participant.score,
     isHost: participant.isHost,
-    isOnline: participant.isOnline
+    isOnline: participant.isOnline,
   }));
 
   return {
@@ -808,15 +837,15 @@ export function makeSnapshot(room: GameRoom, viewerId: ParticipantId): RoomSnaps
     me: {
       participantId: viewerId,
       isHost: viewer.isHost,
-      isSpeaker: viewerId === speakerId
+      isSpeaker: viewerId === speakerId,
     },
     participants,
     roundIndex: turn?.roundIndex ?? null,
     turnIndex: turn?.turnIndex ?? null,
     speakerId,
     answerQueue: turn?.answerQueue ?? [],
-    word: viewerId === speakerId ? turn?.word.surface ?? null : null,
-    ranking: [...participants].sort((a, b) => b.score - a.score)
+    word: viewerId === speakerId ? (turn?.word.surface ?? null) : null,
+    ranking: [...participants].sort((a, b) => b.score - a.score),
   };
 }
 
@@ -836,21 +865,23 @@ function advanceTurn(room: GameRoom): GameRoom {
   return {
     ...room,
     phase: "finished",
-    currentTurn: undefined
+    currentTurn: undefined,
   };
 }
 
 function beginTurn(
   room: GameRoom,
   roundIndex: number,
-  turnIndex: number
+  turnIndex: number,
 ): GameRoom {
   const speakerId = room.speakerOrder[turnIndex];
   if (!speakerId) {
     throw new Error("speaker_not_found");
   }
 
-  const nextWord = room.wordDeck.find((word) => !room.usedWordIds.includes(word.id));
+  const nextWord = room.wordDeck.find(
+    (word) => !room.usedWordIds.includes(word.id),
+  );
   if (!nextWord) {
     throw new Error("not_enough_words");
   }
@@ -862,9 +893,9 @@ function beginTurn(
       turnIndex,
       speakerId,
       word: nextWord,
-      answerQueue: []
+      answerQueue: [],
     },
-    usedWordIds: [...room.usedWordIds, nextWord.id]
+    usedWordIds: [...room.usedWordIds, nextWord.id],
   };
 }
 
@@ -877,33 +908,33 @@ function requireTurn(room: GameRoom): NonNullable<GameRoom["currentTurn"]> {
 }
 ```
 
-Write `packages/game-core/src/index.ts`:
+`packages/game-core/src/index.ts` を作成する:
 
 ```ts
 export * from "./game";
 ```
 
-- [ ] **Step 5: Run game-core tests**
+- [ ] **ステップ 5: game-core のテストを実行する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/game-core test
 ```
 
-Expected: PASS.
+期待結果: PASS。
 
-- [ ] **Step 6: Run game-core typecheck**
+- [ ] **ステップ 6: game-core の typecheck を実行する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/game-core typecheck
 ```
 
-Expected: PASS.
+期待結果: PASS。
 
-- [ ] **Step 7: Commit game core**
+- [ ] **ステップ 7: game-core をコミットする**
 
 ```powershell
 git add packages/game-core
@@ -912,19 +943,20 @@ git commit -m "feat: add game core vertical slice"
 
 ---
 
-### Task 4: Server Package, Prisma Schema, And Persistence Boundary
+### タスク 4: サーバパッケージ、Prisma スキーマ、永続化境界
 
-**Files:**
-- Create: `apps/server/package.json`
-- Create: `apps/server/tsconfig.json`
-- Create: `apps/server/prisma/schema.prisma`
-- Create: `apps/server/src/config.ts`
-- Create: `apps/server/src/db.ts`
-- Create: `apps/server/src/words.ts`
+**対象ファイル:**
 
-- [ ] **Step 1: Create server package metadata**
+- 作成: `apps/server/package.json`
+- 作成: `apps/server/tsconfig.json`
+- 作成: `apps/server/prisma/schema.prisma`
+- 作成: `apps/server/src/config.ts`
+- 作成: `apps/server/src/db.ts`
+- 作成: `apps/server/src/words.ts`
 
-Write `apps/server/package.json`:
+- [ ] **ステップ 1: サーバのパッケージメタデータを作成する**
+
+`apps/server/package.json` を作成する:
 
 ```json
 {
@@ -958,7 +990,7 @@ Write `apps/server/package.json`:
 }
 ```
 
-Write `apps/server/tsconfig.json`:
+`apps/server/tsconfig.json` を作成する:
 
 ```json
 {
@@ -971,9 +1003,9 @@ Write `apps/server/tsconfig.json`:
 }
 ```
 
-- [ ] **Step 2: Add Prisma schema**
+- [ ] **ステップ 2: Prisma スキーマを追加する**
 
-Write `apps/server/prisma/schema.prisma`:
+`apps/server/prisma/schema.prisma` を作成する:
 
 ```prisma
 generator client {
@@ -1026,9 +1058,9 @@ enum RoomStatus {
 }
 ```
 
-- [ ] **Step 3: Add server config and fixed word list**
+- [ ] **ステップ 3: サーバ設定と固定お題リストを追加する**
 
-Write `apps/server/src/config.ts`:
+`apps/server/src/config.ts` を作成する:
 
 ```ts
 export type ServerConfig = {
@@ -1043,12 +1075,12 @@ export function readConfig(env: NodeJS.ProcessEnv): ServerConfig {
     webOrigin: env.WEB_ORIGIN ?? "http://localhost:3000",
     databaseUrl:
       env.DATABASE_URL ??
-      "postgresql://katakanon:katakanon@localhost:5432/katakanon?schema=public"
+      "postgresql://katakanon:katakanon@localhost:5432/katakanon?schema=public",
   };
 }
 ```
 
-Write `apps/server/src/db.ts`:
+`apps/server/src/db.ts` を作成する:
 
 ```ts
 import { PrismaClient } from "@prisma/client";
@@ -1056,7 +1088,7 @@ import { PrismaClient } from "@prisma/client";
 export const prisma = new PrismaClient();
 ```
 
-Write `apps/server/src/words.ts`:
+`apps/server/src/words.ts` を作成する:
 
 ```ts
 import type { Word } from "@katakanon/game-core";
@@ -1071,22 +1103,22 @@ export const fixedWords: Word[] = [
   { id: "w7", surface: "コーヒー" },
   { id: "w8", surface: "ホテル" },
   { id: "w9", surface: "タクシー" },
-  { id: "w10", surface: "パソコン" }
+  { id: "w10", surface: "パソコン" },
 ];
 ```
 
-- [ ] **Step 4: Validate Prisma schema**
+- [ ] **ステップ 4: Prisma スキーマを検証する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/server prisma:validate
 pnpm --filter @katakanon/server prisma:generate
 ```
 
-Expected: both commands PASS.
+期待結果: 両方のコマンドが PASS。
 
-- [ ] **Step 5: Commit server schema foundation**
+- [ ] **ステップ 5: サーバスキーマ基盤をコミットする**
 
 ```powershell
 git add apps/server
@@ -1095,17 +1127,18 @@ git commit -m "feat: add server persistence schema"
 
 ---
 
-### Task 5: Fastify REST API And Runtime Room Store
+### タスク 5: Fastify REST API と実行時ルームストア
 
-**Files:**
-- Create: `apps/server/src/runtimeStore.ts`
-- Create: `apps/server/src/token.ts`
-- Create: `apps/server/src/http.test.ts`
-- Create: `apps/server/src/http.ts`
+**対象ファイル:**
 
-- [ ] **Step 1: Write failing HTTP tests**
+- 作成: `apps/server/src/runtimeStore.ts`
+- 作成: `apps/server/src/token.ts`
+- 作成: `apps/server/src/http.test.ts`
+- 作成: `apps/server/src/http.ts`
 
-Write `apps/server/src/http.test.ts`:
+- [ ] **ステップ 1: 失敗する HTTP テストを書く**
+
+`apps/server/src/http.test.ts` を作成する:
 
 ```ts
 import { describe, expect, it } from "vitest";
@@ -1118,14 +1151,14 @@ describe("HTTP API", () => {
     const response = await app.inject({
       method: "POST",
       url: "/rooms",
-      payload: { displayName: "ホスト", rounds: 1 }
+      payload: { displayName: "ホスト", rounds: 1 },
     });
 
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
       roomCode: expect.any(String),
       participantId: expect.any(String),
-      participantToken: expect.any(String)
+      participantToken: expect.any(String),
     });
   });
 
@@ -1134,7 +1167,7 @@ describe("HTTP API", () => {
     const response = await app.inject({
       method: "POST",
       url: "/rooms",
-      payload: { displayName: "", rounds: 1 }
+      payload: { displayName: "", rounds: 1 },
     });
 
     expect(response.statusCode).toBe(400);
@@ -1143,19 +1176,19 @@ describe("HTTP API", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [ ] **ステップ 2: テストを実行して失敗を確認する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/server test
 ```
 
-Expected: FAIL because `./http` and `./runtimeStore` do not exist.
+期待結果: `./http` と `./runtimeStore` が存在しないため FAIL。
 
-- [ ] **Step 3: Implement runtime store and token helpers**
+- [ ] **ステップ 3: 実行時ストアとトークンヘルパーを実装する**
 
-Write `apps/server/src/runtimeStore.ts`:
+`apps/server/src/runtimeStore.ts` を作成する:
 
 ```ts
 import type { GameRoom } from "@katakanon/game-core";
@@ -1168,12 +1201,12 @@ export type RuntimeStore = {
 export function createRuntimeStore(): RuntimeStore {
   return {
     roomsByCode: new Map(),
-    participantTokens: new Map()
+    participantTokens: new Map(),
   };
 }
 ```
 
-Write `apps/server/src/token.ts`:
+`apps/server/src/token.ts` を作成する:
 
 ```ts
 import { createHash, randomUUID } from "node:crypto";
@@ -1187,9 +1220,9 @@ export function hashParticipantToken(token: string): string {
 }
 ```
 
-- [ ] **Step 4: Implement Fastify routes**
+- [ ] **ステップ 4: Fastify ルートを実装する**
 
-Write `apps/server/src/http.ts`:
+`apps/server/src/http.ts` を作成する:
 
 ```ts
 import { randomUUID } from "node:crypto";
@@ -1223,7 +1256,7 @@ export function buildHttpServer(input: { store: RuntimeStore }) {
       hostParticipantId: participantId,
       hostDisplayName: validation.value,
       rounds: request.body.rounds,
-      now
+      now,
     });
 
     input.store.roomsByCode.set(roomCode, room);
@@ -1232,7 +1265,7 @@ export function buildHttpServer(input: { store: RuntimeStore }) {
     return reply.status(201).send({
       roomCode,
       participantId,
-      participantToken: token
+      participantToken: token,
     });
   });
 
@@ -1255,16 +1288,19 @@ export function buildHttpServer(input: { store: RuntimeStore }) {
     const nextRoom = joinRoom(room, {
       participantId,
       displayName: validation.value,
-      now: new Date().toISOString()
+      now: new Date().toISOString(),
     });
 
     input.store.roomsByCode.set(room.code, nextRoom);
-    input.store.participantTokens.set(token, { participantId, roomCode: room.code });
+    input.store.participantTokens.set(token, {
+      participantId,
+      roomCode: room.code,
+    });
 
     return reply.status(201).send({
       roomCode: room.code,
       participantId,
-      participantToken: token
+      participantToken: token,
     });
   });
 
@@ -1272,7 +1308,9 @@ export function buildHttpServer(input: { store: RuntimeStore }) {
     Params: { code: string };
     Body: { participantToken: string };
   }>("/rooms/:code/resume", async (request, reply) => {
-    const session = input.store.participantTokens.get(request.body.participantToken);
+    const session = input.store.participantTokens.get(
+      request.body.participantToken,
+    );
     if (!session || session.roomCode !== request.params.code) {
       return reply.status(401).send({ error: "invalid_participant_token" });
     }
@@ -1288,18 +1326,18 @@ function randomRoomCode(): string {
 }
 ```
 
-- [ ] **Step 5: Run HTTP tests**
+- [ ] **ステップ 5: HTTP テストを実行する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/server test
 pnpm --filter @katakanon/server typecheck
 ```
 
-Expected: both commands PASS.
+期待結果: 両方のコマンドが PASS。
 
-- [ ] **Step 6: Commit HTTP API**
+- [ ] **ステップ 6: HTTP API をコミットする**
 
 ```powershell
 git add apps/server/src
@@ -1308,15 +1346,16 @@ git commit -m "feat: add room HTTP API"
 
 ---
 
-### Task 6: Socket.IO Vertical Slice
+### タスク 6: Socket.IO 縦スライス
 
-**Files:**
-- Create: `apps/server/src/socket.ts`
-- Create: `apps/server/src/main.ts`
+**対象ファイル:**
 
-- [ ] **Step 1: Implement Socket.IO commands**
+- 作成: `apps/server/src/socket.ts`
+- 作成: `apps/server/src/main.ts`
 
-Write `apps/server/src/socket.ts`:
+- [ ] **ステップ 1: Socket.IO コマンドを実装する**
+
+`apps/server/src/socket.ts` を作成する:
 
 ```ts
 import type { Server as HttpServer } from "node:http";
@@ -1326,7 +1365,7 @@ import {
   judgeAnswer,
   makeSnapshot,
   skipTurn,
-  startGame
+  startGame,
 } from "@katakanon/game-core";
 import { Server, type Socket } from "socket.io";
 import type { RuntimeStore } from "./runtimeStore";
@@ -1339,8 +1378,8 @@ export function attachSocketServer(input: {
 }) {
   const io = new Server(input.httpServer, {
     cors: {
-      origin: input.webOrigin
-    }
+      origin: input.webOrigin,
+    },
   });
 
   io.on("connection", (socket) => {
@@ -1364,7 +1403,9 @@ export function attachSocketServer(input: {
       const roomCode = socket.data.roomCode;
       const participantId = socket.data.participantId;
       const room = input.store.roomsByCode.get(roomCode);
-      const actor = room?.participants.find((participant) => participant.id === participantId);
+      const actor = room?.participants.find(
+        (participant) => participant.id === participantId,
+      );
 
       if (!room || !actor?.isHost) {
         socket.emit("command:error", { error: "host_only_operation" });
@@ -1373,7 +1414,9 @@ export function attachSocketServer(input: {
 
       const nextRoom = startGame(room, {
         words: fixedWords,
-        orderedSpeakerIds: room.participants.map((participant) => participant.id)
+        orderedSpeakerIds: room.participants.map(
+          (participant) => participant.id,
+        ),
       });
 
       input.store.roomsByCode.set(roomCode, nextRoom);
@@ -1381,19 +1424,23 @@ export function attachSocketServer(input: {
     });
 
     socket.on("answer:enqueue", () => {
-      updateRoom(socket, input.store, (room, participantId) => enqueueAnswer(room, participantId));
+      updateRoom(socket, input.store, (room, participantId) =>
+        enqueueAnswer(room, participantId),
+      );
       emitRoomState(io, input.store, socket.data.roomCode);
     });
 
     socket.on("answer:judge", ({ answererId, result }) => {
       updateRoom(socket, input.store, (room, participantId) =>
-        judgeAnswer(room, { speakerId: participantId, answererId, result })
+        judgeAnswer(room, { speakerId: participantId, answererId, result }),
       );
       emitRoomState(io, input.store, socket.data.roomCode);
     });
 
     socket.on("answer:skip", () => {
-      updateRoom(socket, input.store, (room, participantId) => skipTurn(room, participantId));
+      updateRoom(socket, input.store, (room, participantId) =>
+        skipTurn(room, participantId),
+      );
       emitRoomState(io, input.store, socket.data.roomCode);
     });
   });
@@ -1404,7 +1451,7 @@ export function attachSocketServer(input: {
 function updateRoom(
   socket: Socket,
   store: RuntimeStore,
-  updater: (room: GameRoom, participantId: string) => GameRoom
+  updater: (room: GameRoom, participantId: string) => GameRoom,
 ) {
   const roomCode = socket.data.roomCode;
   const participantId = socket.data.participantId;
@@ -1418,7 +1465,9 @@ function updateRoom(
   try {
     store.roomsByCode.set(roomCode, updater(room, participantId));
   } catch (error) {
-    socket.emit("command:error", { error: error instanceof Error ? error.message : "unknown_error" });
+    socket.emit("command:error", {
+      error: error instanceof Error ? error.message : "unknown_error",
+    });
   }
 }
 
@@ -1429,7 +1478,10 @@ function emitRoomState(io: Server, store: RuntimeStore, roomCode: string) {
   }
 
   for (const participant of room.participants) {
-    io.to(participantRoom(roomCode, participant.id)).emit("state:full", makeSnapshot(room, participant.id));
+    io.to(participantRoom(roomCode, participant.id)).emit(
+      "state:full",
+      makeSnapshot(room, participant.id),
+    );
   }
 }
 
@@ -1438,7 +1490,7 @@ function participantRoom(roomCode: string, participantId: string): string {
 }
 ```
 
-Write `apps/server/src/main.ts`:
+`apps/server/src/main.ts` を作成する:
 
 ```ts
 import cors from "@fastify/cors";
@@ -1452,29 +1504,29 @@ const store = createRuntimeStore();
 const app = buildHttpServer({ store });
 
 await app.register(cors, {
-  origin: config.webOrigin
+  origin: config.webOrigin,
 });
 
 attachSocketServer({
   httpServer: app.server,
   store,
-  webOrigin: config.webOrigin
+  webOrigin: config.webOrigin,
 });
 
 await app.listen({ port: config.port, host: "0.0.0.0" });
 ```
 
-- [ ] **Step 2: Typecheck server**
+- [ ] **ステップ 2: サーバの typecheck を実行する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/server typecheck
 ```
 
-Expected: PASS.
+期待結果: PASS。
 
-- [ ] **Step 3: Commit Socket.IO server slice**
+- [ ] **ステップ 3: Socket.IO サーバスライスをコミットする**
 
 ```powershell
 git add apps/server/src/socket.ts apps/server/src/main.ts
@@ -1483,20 +1535,21 @@ git commit -m "feat: add socket vertical slice"
 
 ---
 
-### Task 7: Next.js Web Vertical Slice
+### タスク 7: Next.js Web 縦スライス
 
-**Files:**
-- Create: `apps/web/package.json`
-- Create: `apps/web/tsconfig.json`
-- Create: `apps/web/next.config.mjs`
-- Create: `apps/web/src/app/layout.tsx`
-- Create: `apps/web/src/app/page.tsx`
-- Create: `apps/web/src/app/rooms/[code]/page.tsx`
-- Create: `apps/web/src/app/globals.css`
+**対象ファイル:**
 
-- [ ] **Step 1: Create web package metadata**
+- 作成: `apps/web/package.json`
+- 作成: `apps/web/tsconfig.json`
+- 作成: `apps/web/next.config.mjs`
+- 作成: `apps/web/src/app/layout.tsx`
+- 作成: `apps/web/src/app/page.tsx`
+- 作成: `apps/web/src/app/rooms/[code]/page.tsx`
+- 作成: `apps/web/src/app/globals.css`
 
-Write `apps/web/package.json`:
+- [ ] **ステップ 1: web のパッケージメタデータを作成する**
+
+`apps/web/package.json` を作成する:
 
 ```json
 {
@@ -1526,7 +1579,7 @@ Write `apps/web/package.json`:
 }
 ```
 
-Write `apps/web/tsconfig.json`:
+`apps/web/tsconfig.json` を作成する:
 
 ```json
 {
@@ -1543,7 +1596,7 @@ Write `apps/web/tsconfig.json`:
 }
 ```
 
-Write `apps/web/next.config.mjs`:
+`apps/web/next.config.mjs` を作成する:
 
 ```js
 /** @type {import("next").NextConfig} */
@@ -1552,9 +1605,9 @@ const nextConfig = {};
 export default nextConfig;
 ```
 
-- [ ] **Step 2: Add app shell and basic styling**
+- [ ] **ステップ 2: アプリシェルと基本スタイルを追加する**
 
-Write `apps/web/src/app/layout.tsx`:
+`apps/web/src/app/layout.tsx` を作成する:
 
 ```tsx
 import type { Metadata } from "next";
@@ -1562,10 +1615,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "カタカナ禁止ゲーム",
-  description: "リアルタイムで遊ぶカタカナ禁止ゲーム"
+  description: "リアルタイムで遊ぶカタカナ禁止ゲーム",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="ja">
       <body>{children}</body>
@@ -1574,7 +1631,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-Write `apps/web/src/app/globals.css`:
+`apps/web/src/app/globals.css` を作成する:
 
 ```css
 * {
@@ -1638,9 +1695,9 @@ select {
 }
 ```
 
-- [ ] **Step 3: Add create/join page**
+- [ ] **ステップ 3: 作成/参加ページを追加する**
 
-Write `apps/web/src/app/page.tsx`:
+`apps/web/src/app/page.tsx` を作成する:
 
 ```tsx
 "use client";
@@ -1661,14 +1718,17 @@ export default function HomePage() {
     const response = await fetch(`${serverUrl}/rooms`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ displayName, rounds: 1 })
+      body: JSON.stringify({ displayName, rounds: 1 }),
     });
     const payload = await response.json();
     if (!response.ok) {
       setError(payload.error);
       return;
     }
-    localStorage.setItem(`katakanon:${payload.roomCode}:token`, payload.participantToken);
+    localStorage.setItem(
+      `katakanon:${payload.roomCode}:token`,
+      payload.participantToken,
+    );
     router.push(`/rooms/${payload.roomCode}`);
   }
 
@@ -1678,14 +1738,17 @@ export default function HomePage() {
     const response = await fetch(`${serverUrl}/rooms/${code}/join`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ displayName })
+      body: JSON.stringify({ displayName }),
     });
     const payload = await response.json();
     if (!response.ok) {
       setError(payload.error);
       return;
     }
-    localStorage.setItem(`katakanon:${payload.roomCode}:token`, payload.participantToken);
+    localStorage.setItem(
+      `katakanon:${payload.roomCode}:token`,
+      payload.participantToken,
+    );
     router.push(`/rooms/${payload.roomCode}`);
   }
 
@@ -1695,18 +1758,28 @@ export default function HomePage() {
       <section className="panel stack">
         <label className="stack">
           プレイヤーネーム
-          <input value={displayName} onChange={(event) => setDisplayName(event.target.value)} />
+          <input
+            value={displayName}
+            onChange={(event) => setDisplayName(event.target.value)}
+          />
         </label>
         <div className="row">
-          <button className="primary" onClick={createRoom}>ルーム作成</button>
+          <button className="primary" onClick={createRoom}>
+            ルーム作成
+          </button>
         </div>
       </section>
       <section className="panel stack">
         <label className="stack">
           ルームコード
-          <input value={roomCode} onChange={(event) => setRoomCode(event.target.value)} />
+          <input
+            value={roomCode}
+            onChange={(event) => setRoomCode(event.target.value)}
+          />
         </label>
-        <button className="secondary" onClick={joinRoom}>参加</button>
+        <button className="secondary" onClick={joinRoom}>
+          参加
+        </button>
       </section>
       {error ? <p role="alert">{error}</p> : null}
     </main>
@@ -1714,9 +1787,9 @@ export default function HomePage() {
 }
 ```
 
-- [ ] **Step 4: Add room page**
+- [ ] **ステップ 4: ルームページを追加する**
 
-Write `apps/web/src/app/rooms/[code]/page.tsx`:
+`apps/web/src/app/rooms/[code]/page.tsx` を作成する:
 
 ```tsx
 "use client";
@@ -1745,7 +1818,9 @@ export default function RoomPage() {
 
     socket.connect();
     socket.emit("room:join", { roomCode, participantToken: token });
-    socket.on("command:error", (payload: { error: string }) => setError(payload.error));
+    socket.on("command:error", (payload: { error: string }) =>
+      setError(payload.error),
+    );
     socket.on("state:full", setSnapshot);
 
     return () => {
@@ -1765,10 +1840,20 @@ export default function RoomPage() {
           {snapshot.word ? <p>お題: {snapshot.word}</p> : null}
           <div className="row">
             {snapshot.me.isHost && snapshot.phase === "lobby" ? (
-              <button className="primary" onClick={() => socket.emit("game:start")}>開始</button>
+              <button
+                className="primary"
+                onClick={() => socket.emit("game:start")}
+              >
+                開始
+              </button>
             ) : null}
             {snapshot.phase === "turn" && !snapshot.me.isSpeaker ? (
-              <button className="secondary" onClick={() => socket.emit("answer:enqueue")}>解答</button>
+              <button
+                className="secondary"
+                onClick={() => socket.emit("answer:enqueue")}
+              >
+                解答
+              </button>
             ) : null}
             {snapshot.phase === "turn" && snapshot.me.isSpeaker ? (
               <>
@@ -1778,7 +1863,7 @@ export default function RoomPage() {
                   onClick={() =>
                     socket.emit("answer:judge", {
                       answererId: snapshot.answerQueue[0],
-                      result: "correct"
+                      result: "correct",
                     })
                   }
                 >
@@ -1790,13 +1875,18 @@ export default function RoomPage() {
                   onClick={() =>
                     socket.emit("answer:judge", {
                       answererId: snapshot.answerQueue[0],
-                      result: "incorrect"
+                      result: "incorrect",
                     })
                   }
                 >
                   不正解
                 </button>
-                <button className="secondary" onClick={() => socket.emit("answer:skip")}>スキップ</button>
+                <button
+                  className="secondary"
+                  onClick={() => socket.emit("answer:skip")}
+                >
+                  スキップ
+                </button>
               </>
             ) : null}
           </div>
@@ -1823,17 +1913,17 @@ export default function RoomPage() {
 }
 ```
 
-- [ ] **Step 5: Run web typecheck**
+- [ ] **ステップ 5: web の typecheck を実行する**
 
-Run:
+実行:
 
 ```powershell
 pnpm --filter @katakanon/web typecheck
 ```
 
-Expected: PASS.
+期待結果: PASS。
 
-- [ ] **Step 6: Commit web vertical slice**
+- [ ] **ステップ 6: web 縦スライスをコミットする**
 
 ```powershell
 git add apps/web
@@ -1842,15 +1932,16 @@ git commit -m "feat: add web vertical slice"
 
 ---
 
-### Task 8: CI And README
+### タスク 8: CI と README
 
-**Files:**
-- Create: `.github/workflows/ci.yml`
-- Create or modify: `README.md`
+**対象ファイル:**
 
-- [ ] **Step 1: Add CI workflow**
+- 作成: `.github/workflows/ci.yml`
+- 作成または変更: `README.md`
 
-Write `.github/workflows/ci.yml`:
+- [ ] **ステップ 1: CI workflow を追加する**
+
+`.github/workflows/ci.yml` を作成する:
 
 ```yaml
 name: CI
@@ -1894,32 +1985,32 @@ jobs:
       - run: pnpm test
 ```
 
-- [ ] **Step 2: Add README foundation**
+- [ ] **ステップ 2: README の土台を追加する**
 
-Write `README.md`:
+`README.md` を作成する:
 
-```md
+````md
 # カタカナ禁止ゲーム
 
 Web 系転職ポートフォリオとして作る、リアルタイム参加型のカタカナ禁止ゲームです。
 
-## Tech Stack
+## 技術スタック
 
-- Frontend: Next.js, React, TypeScript
-- Backend: Fastify, Socket.IO, TypeScript
+- Frontend: Next.js、React、TypeScript
+- Backend: Fastify、Socket.IO、TypeScript
 - Database: PostgreSQL
 - ORM: Prisma
 - Test: Vitest
 - Local infra: Docker Compose
 - CI: GitHub Actions
 
-## Architecture
+## アーキテクチャ
 
 ゲーム判定と状態遷移はサーバ側の状態機械に集約します。クライアントはコマンドを送信し、サーバから配信されるスナップショットを表示します。
 
 MVP のゲーム中状態はサーバメモリに保持し、ルーム、参加者、結果の永続化は PostgreSQL と Prisma で扱います。
 
-## Setup
+## セットアップ
 
 ```powershell
 corepack enable
@@ -1931,7 +2022,7 @@ pnpm prisma:generate
 pnpm dev
 ```
 
-## Checks
+## チェック
 
 ```powershell
 pnpm typecheck
@@ -1940,7 +2031,7 @@ pnpm prisma:validate
 pnpm prisma:generate
 ```
 
-## MVP Vertical Slice
+## MVP 縦スライス
 
 この段階でできること:
 
@@ -1953,16 +2044,17 @@ pnpm prisma:generate
 - 正解、誤答、スキップ
 - 最終結果表示の土台
 
-## Design Docs
+## 設計ドキュメント
 
 - `docs/01_requirements.md`
 - `docs/superpowers/specs/2026-04-26-portfolio-architecture-design.md`
 - `docs/superpowers/plans/2026-04-26-mvp-foundation-vertical-slice.md`
-```
 
-- [ ] **Step 3: Run all checks**
+````
 
-Run:
+- [ ] **ステップ 3: 全チェックを実行する**
+
+実行:
 
 ```powershell
 pnpm prisma:validate
@@ -1971,9 +2063,9 @@ pnpm typecheck
 pnpm test
 ```
 
-Expected: all commands PASS.
+期待結果: すべてのコマンドが PASS。
 
-- [ ] **Step 4: Commit CI and README**
+- [ ] **ステップ 4: CI と README をコミットする**
 
 ```powershell
 git add .github/workflows/ci.yml README.md
@@ -1982,25 +2074,25 @@ git commit -m "docs: add project README and CI"
 
 ---
 
-## Self-Review
+## 自己レビュー
 
-Spec coverage:
+Spec 対応:
 
-- The plan covers the agreed stack: Next.js, Fastify, Socket.IO, PostgreSQL, Prisma, Docker Compose, and CI.
-- The plan covers server-owned game state for the first gameplay slice.
-- The plan covers participant tokens for anonymous identity and reconnect-ready sessions.
-- The plan covers per-participant snapshots and hides the word from non-speakers.
-- The plan covers DB schema foundation, but the first runtime store is memory-only.
-- The plan does not cover avatar drawing, accusation/vote, host transfer, and production deployment; those are intentionally separate follow-up plans.
+- 合意した技術スタック（Next.js、Fastify、Socket.IO、PostgreSQL、Prisma、Docker Compose、CI）を扱っている。
+- 最初のゲームプレイスライスについて、サーバ所有のゲーム状態を扱っている。
+- 匿名参加と再接続準備のための `participantToken` を扱っている。
+- 参加者ごとのスナップショット配信と、説明者以外へのお題秘匿を扱っている。
+- DB スキーマ基盤を扱っている。ただし最初の実行時ストアはメモリのみとする。
+- アバター描画、指摘・投票、ホスト移譲、本番デプロイは扱わない。これらは意図的に後続計画へ分離する。
 
-Placeholder scan:
+プレースホルダー確認:
 
-- No task contains unresolved placeholder markers or open-ended implementation text.
-- Every code-writing step includes concrete file contents or concrete replacement instructions.
-- Each task has explicit commands and expected outcomes.
+- 未解決のプレースホルダーや、曖昧な実装指示は残していない。
+- コードを書くステップには、具体的なファイル内容または具体的な置換指示を含めている。
+- 各タスクには、実行コマンドと期待結果を明記している。
 
-Type consistency:
+型の整合性:
 
-- Shared `RoomSnapshot`, `ParticipantId`, and `RoomCode` are consumed by game-core, server, and web.
-- Game-core command names match Socket.IO command handlers.
-- `participantToken` naming is consistent across HTTP, Socket.IO, web localStorage, and README.
+- 共有の `RoomSnapshot`、`ParticipantId`、`RoomCode` は game-core、server、web で一貫して使う。
+- game-core のコマンド名と Socket.IO の command handler が対応している。
+- `participantToken` の命名は HTTP、Socket.IO、web の localStorage、README で一貫している。
