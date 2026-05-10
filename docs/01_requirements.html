@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>カタカナ禁止ゲーム — プロダクト仕様書</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #f8f9fc;
+    --surface: #ffffff;
+    --surface-2: #f1f3f8;
+    --border: #e2e6ef;
+    --primary: #4f46e5;
+    --primary-light: #eef2ff;
+    --primary-dark: #3730a3;
+    --accent: #0ea5e9;
+    --accent-light: #e0f2fe;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+    --font: 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ─── LAYOUT ─────────────────────────────────────── */
+  .layout { display: flex; min-height: 100vh; }
+
+  nav {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+  }
+
+  nav .nav-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  nav .nav-logo .game-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: .03em;
+  }
+
+  nav ul { list-style: none; padding: 0 12px; }
+  nav li { margin: 1px 0; }
+
+  nav a {
+    display: block;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    transition: background .15s, color .15s;
+  }
+  nav a:hover { background: var(--primary-light); color: var(--primary); }
+  nav .nav-section { font-size: 11px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: .08em; padding: 16px 12px 4px; }
+
+  main {
+    flex: 1;
+    min-width: 0;
+    padding: 40px 48px;
+    max-width: 960px;
+  }
+
+  /* ─── HERO ───────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 60%, #1e1b5e 100%);
+    color: #fff;
+    border-radius: 20px;
+    padding: 48px 48px 40px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .hero-tag { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .7; margin-bottom: 12px; }
+  .hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 12px; line-height: 1.2; }
+  .hero-desc { font-size: 15px; opacity: .85; max-width: 520px; }
+  .hero-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .hero-chip {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* ─── SECTIONS ───────────────────────────────────── */
+  section { margin-bottom: 48px; }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+  }
+  h2 .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h3::before { content: ''; display: block; width: 4px; height: 16px; background: var(--primary); border-radius: 2px; }
+
+  h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    margin: 16px 0 8px;
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
+  }
+
+  p { margin-bottom: 12px; color: var(--text); }
+  strong { color: var(--primary-dark); font-weight: 700; }
+
+  /* ─── CARDS ──────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+  }
+
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px; }
+
+  .info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .info-card .ic-icon { font-size: 24px; margin-bottom: 10px; }
+  .info-card .ic-title { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .info-card .ic-body { font-size: 14px; color: var(--text); }
+
+  /* ─── CALLOUTS ───────────────────────────────────── */
+  .callout {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.5; }
+  .callout.info    { background: var(--accent-light);   border-left: 4px solid var(--accent);   }
+  .callout.success { background: var(--success-light);  border-left: 4px solid var(--success);  }
+  .callout.warning { background: var(--warning-light);  border-left: 4px solid var(--warning);  }
+  .callout.danger  { background: var(--danger-light);   border-left: 4px solid var(--danger);   }
+
+  /* ─── BADGE ──────────────────────────────────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+  }
+  .badge-mvp     { background: var(--primary-light); color: var(--primary-dark); }
+  .badge-future  { background: var(--warning-light); color: #92400e; }
+  .badge-confirm { background: var(--success-light); color: #065f46; }
+
+  /* ─── TABLES ─────────────────────────────────────── */
+  .tbl-wrap { overflow-x: auto; margin: 16px 0; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--surface);
+  }
+  thead th {
+    background: var(--surface-2);
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td:first-child { font-weight: 600; white-space: nowrap; color: var(--primary-dark); }
+
+  /* ─── MERMAID ────────────────────────────────────── */
+  .mermaid-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 20px 0;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+  }
+  .mermaid-wrap .diagram-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ─── SCORE BOX ──────────────────────────────────── */
+  .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+  .score-box {
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+  }
+  .score-box.plus  { background: var(--success-light); border: 1px solid #a7f3d0; }
+  .score-box.minus { background: var(--danger-light);  border: 1px solid #fca5a5; }
+  .score-box .sb-num { font-size: 36px; font-weight: 900; line-height: 1; }
+  .score-box.plus  .sb-num { color: var(--success); }
+  .score-box.minus .sb-num { color: var(--danger); }
+  .score-box .sb-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-top: 6px; }
+
+  /* ─── STEPS ──────────────────────────────────────── */
+  .steps { margin: 16px 0; }
+  .step {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-body { flex: 1; }
+  .step-title { font-weight: 700; margin-bottom: 4px; }
+  .step-desc { font-size: 14px; color: var(--text-muted); }
+
+  /* ─── REVISION ───────────────────────────────────── */
+  .revision-entry {
+    display: flex;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .revision-entry:last-child { border-bottom: none; }
+  .revision-date { color: var(--text-muted); white-space: nowrap; font-size: 12px; font-family: monospace; padding-top: 2px; }
+  .revision-text { flex: 1; color: var(--text); }
+
+  /* ─── SVG ICONS (inline) ─────────────────────────── */
+  .icon-wrap { display: flex; align-items: center; justify-content: center; }
+
+  /* ─── RESPONSIVE ─────────────────────────────────── */
+  @media (max-width: 900px) {
+    nav { display: none; }
+    main { padding: 24px 20px; }
+    .hero { padding: 32px 24px; }
+    .hero h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ── SIDEBAR ─────────────────────────────────────── -->
+<nav>
+  <div class="nav-logo">
+    <div class="game-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      カタカナ禁止ゲーム
+    </div>
+  </div>
+  <div class="nav-section">仕様書</div>
+  <ul>
+    <li><a href="#s1">1. 文書の目的</a></li>
+    <li><a href="#s2">2. 概要</a></li>
+    <li><a href="#s3">3. 用語</a></li>
+    <li><a href="#s4">4. ルールと判定</a></li>
+    <li><a href="#s5">5. 参加人数</a></li>
+    <li><a href="#s6">6. ルーム作成・設定</a></li>
+  </ul>
+  <div class="nav-section">ゲーム進行</div>
+  <ul>
+    <li><a href="#s71">7.1 全体フロー</a></li>
+    <li><a href="#s72">7.2 ラウンド・ターン</a></li>
+    <li><a href="#s73">7.3 お題の表示</a></li>
+    <li><a href="#s74">7.4 指摘と投票</a></li>
+    <li><a href="#s75">7.5 解答キュー</a></li>
+    <li><a href="#s76">7.6 説明時間</a></li>
+    <li><a href="#s77">7.7 得点配分</a></li>
+    <li><a href="#s78">7.8 ルーム参加・ホスト</a></li>
+    <li><a href="#s79">7.9 スコア・順位</a></li>
+  </ul>
+  <div class="nav-section">その他</div>
+  <ul>
+    <li><a href="#s8">8. データ</a></li>
+    <li><a href="#s9">9. 非機能・技術方針</a></li>
+    <li><a href="#s10">10. 未確定・要検討</a></li>
+    <li><a href="#s11">11. 改訂履歴</a></li>
+  </ul>
+</nav>
+
+<!-- ── MAIN ────────────────────────────────────────── -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">プロダクト仕様書 — 要件定義</div>
+    <h1>カタカナ禁止ゲーム</h1>
+    <p class="hero-desc">通話ツール（Discord 等）と併用して遊ぶ Web アプリ型マルチプレイゲーム。カタカナのお題をカタカナなしで説明し、仲間に当てさせる言葉遊び。</p>
+    <div class="hero-chips">
+      <span class="hero-chip">セッション型マルチプレイ</span>
+      <span class="hero-chip">リアルタイム同期</span>
+      <span class="hero-chip">PC・スマホ対応</span>
+      <span class="hero-chip">Next.js / Fastify / Socket.IO</span>
+    </div>
+  </div>
+
+  <!-- 1. 文書の目的 -->
+  <section id="s1">
+    <h2><span class="section-num">1</span> 文書の目的</h2>
+    <p>本書は、通話ツール（Discord 等）と併用して遊ぶ <strong>カタカナ禁止説明ゲーム</strong> を Web アプリとして実装するにあたり、プロダクトの範囲・挙動・用語を共有するための仕様書である。</p>
+  </section>
+
+  <!-- 2. 概要 -->
+  <section id="s2">
+    <h2><span class="section-num">2</span> 概要</h2>
+
+    <h3 id="s21">2.1 一言説明</h3>
+    <div class="callout info">
+      <span class="callout-icon">💡</span>
+      <div>参加者の一人が <strong>カタカナのお題</strong> を、<strong>カタカナを使わず</strong>通話で説明し、他の参加者が正解を当てる。違反疑惑は <strong>指摘と投票</strong> で処理し、<strong>得点</strong> で順位をつける <strong>セッション型マルチプレイ</strong> ゲーム。</div>
+    </div>
+
+    <h3 id="s22">2.2 アプリの担当範囲</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>担当</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>本アプリ</td>
+            <td>ルーム管理、参加者同期、お題の秘匿表示、参加者プロフィール（プレイヤーネーム・手描きアイコン）、順番・ターン・ラウンド・得点、解答・正誤・指摘・投票の手続きと記録</td>
+          </tr>
+          <tr>
+            <td>外部（通話ツール）</td>
+            <td>音声による説明・発話・話し合い</td>
+          </tr>
+          <tr>
+            <td>参加者</td>
+            <td>「カタカナを言ったか」等の <strong>ルールの解釈</strong>（システムはその内容を定義しない）</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="s23">2.3 目的・対象</h3>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="ic-title">主な利用者</div>
+        <div class="ic-body">開発者の友人同士での遊び</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="ic-title">開発者向け目的</div>
+        <div class="ic-body">Web 技術の習得・発展、ポートフォリオとしての提示</div>
+      </div>
+    </div>
+
+    <h3 id="s24">2.4 プラットフォーム</h3>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="ic-title">プラットフォーム</div>
+        <div class="ic-body">PC・スマートフォン対応（レスポンシブ Web）</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 用語 -->
+  <section id="s3">
+    <h2><span class="section-num">3</span> 用語</h2>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>用語</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td>ルーム</td><td>1 つのゲームセッションの単位。<strong>1 ルーム = 1 ゲーム</strong>。</td></tr>
+          <tr><td>参加者</td><td>ルームに参加しているプレイヤー。</td></tr>
+          <tr><td>プレイヤーネーム</td><td>入室時に参加者自身が入力する <strong>表示名</strong>。<strong>必須</strong>。</td></tr>
+          <tr><td>アイコン（手描き）</td><td><strong>入室後</strong> に描画 UI で編集・確定するアイコン。未設定でも入室可能（プレースホルダー表示）。</td></tr>
+          <tr><td>ホスト</td><td><strong>ルーム作成者</strong>。ゲーム開始権限を持つ。切断時は権限が自動移譲。任意の参加者へ手動移譲も可。</td></tr>
+          <tr><td>説明者</td><td>当該ターンにお題を知り、カタカナを使わず説明する役。</td></tr>
+          <tr><td>解答者</td><td>説明者以外。正解を推測し解答する。</td></tr>
+          <tr><td>指摘者</td><td>説明者のカタカナ使用を疑い、指摘操作を行った参加者。</td></tr>
+          <tr><td>ターン</td><td>1 人の説明者が <strong>1 お題</strong> について説明し、解答・指摘・正誤判定などが行われる単位。</td></tr>
+          <tr><td>ラウンド</td><td>参加者 <strong>全員</strong> が <strong>それぞれ 1 回ずつ</strong> 説明者を経験するまでのまとまり。<strong>1 ラウンド = N ターン</strong>（N = 参加者数）。</td></tr>
+          <tr><td>お題</td><td>当該ターンの説明者の画面にのみ表示される <strong>カタカナ表記のワード</strong>（MVP は固定リスト）。</td></tr>
+          <tr><td>解答キュー</td><td>解答ボタンが押された順に並ぶ <strong>解答者の待ち行列</strong>。先頭が「解答権」を持つ。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 4. ルールと判定 -->
+  <section id="s4">
+    <h2><span class="section-num">4</span> ルールと判定</h2>
+
+    <h3 id="s41">4.1 カタカナ禁止の性質</h3>
+    <div class="callout warning">
+      <span class="callout-icon">⚠️</span>
+      <div><strong>違反の内容・境界</strong>（何を「カタカナとみなすか」等）は <strong>参加者同士の話し合い</strong> に委ねる。<strong>本システムはその内容を定義しない。</strong></div>
+    </div>
+
+    <h3 id="s42">4.2 システム上の違反処理</h3>
+    <div class="callout info">
+      <span class="callout-icon">🔧</span>
+      <div>違反の <strong>手続き的な認定</strong> は、<strong>指摘ボタン → 説明者の是認・否認 → （否認時のみ）投票</strong> の結果として記録する。</div>
+    </div>
+  </section>
+
+  <!-- 5. 参加人数 -->
+  <section id="s5">
+    <h2><span class="section-num">5</span> 参加者人数とモード</h2>
+
+    <h3 id="s51">5.1 想定（MVP）</h3>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="ic-title">ゲーム開始条件</div>
+        <div class="ic-body"><strong>3 人以上</strong>のオンライン参加者が必要。3 人未満では開始操作を受け付けない。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div class="ic-title">2 人プレイ</div>
+        <div class="ic-body"><span class="badge badge-future">将来機能</span> 投票なし・別ルール化等を検討。</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);">※ 説明者・指摘者を除いた解答者が投票に参加できない場合、ゲームが成立しないため 3 人以上を条件とする。</p>
+  </section>
+
+  <!-- 6. ルーム作成・設定 -->
+  <section id="s6">
+    <h2><span class="section-num">6</span> ルーム作成・設定</h2>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>設定項目</th><th>説明</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>ラウンド数</td>
+            <td>全員が 1 周するラウンドを何回繰り返すか。</td>
+            <td><span class="badge badge-mvp">MVP</span></td>
+          </tr>
+          <tr>
+            <td>お題ソース</td>
+            <td>MVP は固定リスト。ユーザー独自リストは将来機能。</td>
+            <td><span class="badge badge-mvp">MVP</span></td>
+          </tr>
+          <tr>
+            <td>ライフ制</td>
+            <td>MVP では採用せず。順位は得点のみで決定。</td>
+            <td><span class="badge badge-future">将来機能</span></td>
+          </tr>
+          <tr>
+            <td>説明時間制限</td>
+            <td>MVP ではタイマー・時間切れは設けない。</td>
+            <td><span class="badge badge-future">将来機能</span></td>
+          </tr>
+          <tr>
+            <td>投票時間制限</td>
+            <td>MVP では投票タイマーなし。全員投票で確定。</td>
+            <td><span class="badge badge-future">将来機能</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7. ゲーム進行 -->
+  <section id="s71">
+    <h2><span class="section-num">7</span> ゲーム進行</h2>
+
+    <h3 id="s71h">7.1 全体フロー</h3>
+    <div class="mermaid-wrap">
+      <div class="diagram-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        全体ゲームフロー
+      </div>
+      <div class="mermaid">
+graph TD
+    A([ルーム作成]) --> B[参加者が合流\nプレイヤーネーム入力]
+    B --> C{オンライン参加者\n3人以上?}
+    C -- いいえ --> B
+    C -- はい --> D([ホストがゲーム開始])
+    D --> E[ラウンド開始\n説明順をランダム決定]
+    E --> F[ターン開始\n説明者にお題表示]
+    F --> G[説明 / 解答 / 指摘フロー]
+    G --> H{ターン終了条件}
+    H -- 正解 --> I[加点処理]
+    H -- スキップ --> J[得点変動なし]
+    I --> K{同ラウンド内\n次ターンあり?}
+    J --> K
+    K -- あり --> F
+    K -- なし --> L{次ラウンド\nあり?}
+    L -- あり --> E
+    L -- なし --> M([全ラウンド終了\n順位表示])
+
+    style A fill:#4f46e5,stroke:#3730a3,color:#fff,rx:20
+    style D fill:#4f46e5,stroke:#3730a3,color:#fff,rx:20
+    style M fill:#10b981,stroke:#065f46,color:#fff,rx:20
+    style C fill:#fef3c7,stroke:#d97706
+    style H fill:#fef3c7,stroke:#d97706
+    style K fill:#fef3c7,stroke:#d97706
+    style L fill:#fef3c7,stroke:#d97706
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">ルーム作成</div>
+          <div class="step-desc">ホストが設定を入力し、参加用の <strong>ルームコード</strong> および <strong>URL</strong> の双方で参加できるようにする。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">参加者が合流</div>
+          <div class="step-desc">各参加者は入室時にプレイヤーネームを入力して入室。手描きアイコンは入室後に編集・確定する。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">ラウンド繰り返し</div>
+          <div class="step-desc">各ラウンドで参加者全員が説明者となるまでターンを順に進める。ラウンド数だけこれを繰り返す。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">結果表示</div>
+          <div class="step-desc">全ラウンド終了後、得点に基づく順位を表示する。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s72">
+    <h3 id="s72h">7.2 ラウンド・ターンと役割の決定</h3>
+
+    <div class="mermaid-wrap">
+      <div class="diagram-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        ラウンド・ターン構造
+      </div>
+      <div class="mermaid">
+graph LR
+    subgraph GAME["ゲーム全体 (ラウンド数 R 回)"]
+      subgraph R1["ラウンド 1 (N ターン)"]
+        T1["ターン 1\n説明者: A"]
+        T2["ターン 2\n説明者: B"]
+        TN["ターン N\n説明者: N人目"]
+        T1 --> T2 --> TN
+      end
+      subgraph R2["ラウンド 2 (N ターン)"]
+        T21["ターン 1\n説明者: ランダム順"]
+      end
+      R1 --> R2
+    end
+
+    style GAME fill:#eef2ff,stroke:#4f46e5,rx:12
+    style R1 fill:#f1f5f9,stroke:#94a3b8,rx:8
+    style R2 fill:#f1f5f9,stroke:#94a3b8,rx:8
+      </div>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <div>各ラウンド開始時に説明順をランダム決定。各ターンは <strong>正解</strong> または <strong>スキップ</strong> で終了。ターン終了時は解答キューをクリアし次ターンへ進む。</div>
+    </div>
+  </section>
+
+  <section id="s73">
+    <h3 id="s73h">7.3 お題の表示</h3>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">🔒</div>
+        <div class="ic-title">秘匿表示</div>
+        <div class="ic-body">お題は <strong>当該ターンの説明者の画面にのみ</strong> 表示。他参加者には一切送信しない。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">📋</div>
+        <div class="ic-title">固定リスト（MVP）</div>
+        <div class="ic-body">サーバ側で固定リストを保持。同一ゲーム内で同じお題は重複出題しない。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🔢</div>
+        <div class="ic-title">必要お題数</div>
+        <div class="ic-body">参加者数 × ラウンド数を満たす必要あり。不足する場合はゲーム開始不可。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7.4 指摘と投票 -->
+  <section id="s74">
+    <h3 id="s74h">7.4 指摘と投票</h3>
+
+    <div class="mermaid-wrap">
+      <div class="diagram-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        指摘フロー（排他ロック）
+      </div>
+      <div class="mermaid">
+graph TD
+    S([解答者が指摘ボタン押下]) --> CK{指摘フロー\n進行中?}
+    CK -- はい --> NG([無効・受付なし])
+    CK -- いいえ --> LOCK[先着1人が指摘者確定\n排他ロック開始]
+    LOCK --> PAUSE[解答ボタン・指摘ボタン無効化\n正誤判定を一時停止]
+    PAUSE --> DISP[説明者に是認/否認を表示]
+    DISP --> DEC{説明者の判断}
+    DEC -- 是認 --> ADMIT[説明者 −1pt\n指摘成立]
+    DEC -- 否認 --> VOTE[投票開始\n説明者・指摘者 以外が投票]
+    VOTE --> VDONE{全員投票完了}
+    VDONE --> RESULT{可決 or 否決}
+    RESULT -- 可決 --> PEN1[説明者 −1pt]
+    RESULT -- 否決・同票 --> PEN2[指摘者 −1pt]
+    ADMIT --> UNLOCK[ロック解除\n同一ターン内で再指摘可]
+    PEN1 --> UNLOCK
+    PEN2 --> UNLOCK
+    UNLOCK --> RESUME([ターン再開])
+
+    style S fill:#4f46e5,stroke:#3730a3,color:#fff
+    style NG fill:#fee2e2,stroke:#ef4444,color:#991b1b
+    style LOCK fill:#fef3c7,stroke:#d97706
+    style ADMIT fill:#fee2e2,stroke:#ef4444
+    style PEN1 fill:#fee2e2,stroke:#ef4444
+    style PEN2 fill:#fee2e2,stroke:#ef4444
+    style RESUME fill:#d1fae5,stroke:#10b981,color:#065f46
+      </div>
+    </div>
+
+    <div class="callout info" style="margin-top:0;">
+      <span class="callout-icon">🔒</span>
+      <div>指摘フロー中（指摘発生から是認／否認、または投票確定まで）は、<strong>解答ボタンおよび指摘ボタンを無効化</strong>し、説明者による正誤判定も一時停止する。既存の解答キューと解答権は保持され、フロー完了後に同じターンを再開する。</div>
+    </div>
+
+    <h4 id="s741">7.4.1 投票が同票のとき</h4>
+    <div class="callout warning">
+      <span class="callout-icon">⚖️</span>
+      <div>可決票と否決票が <strong>同数</strong> の場合は <strong>否決</strong> 扱い（指摘不成立）。指摘者から 1 点減点。</div>
+    </div>
+
+    <h4 id="s742">7.4.2 投票の確定条件（MVP）</h4>
+    <div class="callout info">
+      <span class="callout-icon">🗳️</span>
+      <div>MVP では投票タイマーを設けない。<strong>オンラインの投票権者全員</strong> が投票した時点で確定。投票中に切断した参加者は一時的に投票権者から除外。再接続後は投票権者に戻る。オンライン投票権者が 0 人になった場合は <strong>保留</strong> とし、ホストは得点変動なしで指摘フローを無効化して同じターンを再開できる。</div>
+    </div>
+  </section>
+
+  <!-- 7.5 解答キュー -->
+  <section id="s75">
+    <h3 id="s75h">7.5 解答キューと正誤判定</h3>
+
+    <div class="mermaid-wrap">
+      <div class="diagram-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        解答キューと正誤判定フロー
+      </div>
+      <div class="mermaid">
+graph TD
+    BTN([解答者が解答ボタン押下]) --> CHK{キューに\n既にいる?}
+    CHK -- はい --> SKIP([無効])
+    CHK -- いいえ --> ENQUEUE[キューの末尾に追加]
+    ENQUEUE --> HEAD[先頭の解答者が解答権を取得\n全参加者の画面に順番を表示]
+    HEAD --> JUDGE{説明者の判定}
+    JUDGE -- 正解 --> CORRECT[解答者 +1pt\n説明者 +1pt\nターン終了]
+    JUDGE -- 不正解 --> WRONG[先頭をキューから削除\n削除された解答者は再度並び直し可]
+    WRONG --> NEXT{キューに\n次がいる?}
+    NEXT -- はい --> HEAD
+    NEXT -- いいえ --> WAIT[通常ターンへ戻る\n次の解答待ち]
+
+    style BTN fill:#4f46e5,stroke:#3730a3,color:#fff
+    style SKIP fill:#fee2e2,stroke:#ef4444,color:#991b1b
+    style CORRECT fill:#d1fae5,stroke:#10b981,color:#065f46
+    style WRONG fill:#fef3c7,stroke:#d97706
+      </div>
+    </div>
+
+    <h4 id="s751">7.5.1 説明者によるスキップ</h4>
+    <div class="callout info">
+      <span class="callout-icon">⏭️</span>
+      <div>説明者のみがスキップ可能（通常ターン進行中・指摘フロー中を除く）。スキップ時は加減点なし、解答キューをクリアして次ターンへ進む。ホストや解答者はスキップ不可。</div>
+    </div>
+  </section>
+
+  <!-- 7.6 説明時間 -->
+  <section id="s76">
+    <h3 id="s76h">7.6 説明時間（MVP）</h3>
+    <div class="callout warning">
+      <span class="callout-icon">⏱️</span>
+      <div><span class="badge badge-mvp">MVP</span> では各ターンの説明パートに対するアプリによる <strong>時間制限・時間切れによる強制ターン進行は行わない</strong>。説明の区切りは正解・スキップ・指摘フロー・参加者の運用に委ねる。<br><span class="badge badge-future" style="margin-top:6px;display:inline-block;">将来機能</span> 説明時間・時間切れの導入は将来機能。</div>
+    </div>
+  </section>
+
+  <!-- 7.7 得点配分 -->
+  <section id="s77">
+    <h3 id="s77h">7.7 得点配分と正解時の加点</h3>
+
+    <div class="score-grid">
+      <div class="score-box plus">
+        <div class="sb-num">+1</div>
+        <div class="sb-label">正解した解答者</div>
+      </div>
+      <div class="score-box plus">
+        <div class="sb-num">+1</div>
+        <div class="sb-label">当該ターンの説明者</div>
+      </div>
+      <div class="score-box minus">
+        <div class="sb-num">−1</div>
+        <div class="sb-label">指摘成立・可決時の説明者</div>
+      </div>
+      <div class="score-box minus">
+        <div class="sb-num">−1</div>
+        <div class="sb-label">指摘否決・同票時の指摘者</div>
+      </div>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">✅</span>
+      <div><strong>両者加点</strong>（説明者にも加点）を採用。説明の成功も得点に反映されるため、全員が説明者のターンを真剣にやりやすく、説明と解答の両方で盛り上がる。</div>
+    </div>
+  </section>
+
+  <!-- 7.8 ルーム参加・ホスト -->
+  <section id="s78">
+    <h3 id="s78h">7.8 ルーム参加・ホスト</h3>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>項目</th><th>仕様</th></tr></thead>
+        <tbody>
+          <tr><td>参加方法</td><td>MVP では <strong>ルームコード入力</strong> と <strong>URL 参加</strong> の両方を提供する。参加者は <strong>どちらか一方</strong> の方法で参加できればよい。</td></tr>
+          <tr><td>ゲーム開始</td><td><strong>ホスト（ルーム作成者）のみ</strong>。オンライン参加者 <strong>3 人以上</strong> の場合に限り開始できる。</td></tr>
+          <tr><td>ホスト権限</td><td>原則ルーム作成者がホスト。</td></tr>
+          <tr><td>ホスト切断</td><td>切断された場合、<strong>現在接続中の参加者</strong> のうち <strong>入室が最も早い参加者</strong> へ自動移譲。</td></tr>
+          <tr><td>手動移譲</td><td>ホストは <strong>任意の参加者</strong> にホスト権限を手動で移譲できる。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 id="s781">7.8.1 入室時のプレイヤー設定</h4>
+    <div class="callout info">
+      <span class="callout-icon">🚪</span>
+      <div>入室完了条件は <strong>プレイヤーネームの入力・検証の完了のみ</strong>。手描きアイコンの確定を待って入室をブロックしない（アイコン確定まで入室できないと参加者の把握が困難になるため）。</div>
+    </div>
+
+    <h4 id="s782">7.8.2 プレイヤーネームの入力規約</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>項目</th><th>仕様</th></tr></thead>
+        <tbody>
+          <tr><td>必須</td><td>1 件必須。未入力で入室完了は不可。</td></tr>
+          <tr><td>前後の空白</td><td>先頭・末尾の空白は削除（trim）してから検証・保存。</td></tr>
+          <tr><td>空白のみ</td><td>trim 後が 0 文字の場合は無効。</td></tr>
+          <tr><td>最大文字数</td><td>trim 後 <strong>32 文字以下</strong>（Unicode コードポイント単位）。</td></tr>
+          <tr><td>最小文字数</td><td>trim 後 <strong>1 文字以上</strong>。</td></tr>
+          <tr><td>制御文字</td><td>U+0000〜U+001F、改行等は <strong>除去して保存</strong>。trim と制御文字除去後に 1〜32 Unicode コードポイントであれば有効。</td></tr>
+          <tr><td>同一ルーム内の重複</td><td><strong>許可する</strong>（識別は名前・アイコン・内部 ID で行う）。</td></tr>
+          <tr><td>入室後変更</td><td>MVP では入室後変更不可。<span class="badge badge-future">将来機能</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 id="s783">7.8.3 手描きアイコンの扱い</h4>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">✏️</div>
+        <div class="ic-title">編集タイミング</div>
+        <div class="ic-body">入室後（ロビー・待機画面中）のみ編集可。ゲーム開始後は固定。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⬜</div>
+        <div class="ic-title">空白でもOK</div>
+        <div class="ic-body">空白キャンバス（未描画）のまま確定してもよい。未設定はプレースホルダー表示。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🚀</div>
+        <div class="ic-title">開始への影響なし</div>
+        <div class="ic-body">全員のアイコン確定をゲーム開始の必須条件としない。プレースホルダーのまま開始可。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">●</div>
+        <div class="ic-title">描画 UI</div>
+        <div class="ic-body">正方形キャンバス、白背景、黒ペンのみ。ペン太さは固定。消しゴムとクリアを提供する。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">PNG</div>
+        <div class="ic-title">画像仕様</div>
+        <div class="ic-body">256×256 PNG、最大 100KB。未描画でも保存可。上限超過はサーバで拒否する。</div>
+      </div>
+    </div>
+
+    <h4 id="s784">7.8.4 再接続</h4>
+    <div class="callout success">
+      <span class="callout-icon">🔄</span>
+      <div>入室時にサーバが <code>participant_token</code> を発行。クライアントはブラウザ内に保存し、再接続時にサーバへ提示。サーバはトークンを検証し同じ参加者として復帰させる（得点・ホスト権限・解答キュー・投票権を引き継ぐ）。</div>
+    </div>
+
+    <h4 id="s785">7.8.5 ゲーム中の切断</h4>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>対象</th><th>仕様</th></tr></thead>
+        <tbody>
+          <tr><td>説明者</td><td>同じターンを一時停止し、説明者の復帰を待つ。ホストは得点変動なしでターンをスキップできる。</td></tr>
+          <tr><td>解答権者</td><td>解答キューから自動削除し、次の参加者へ解答権を移す。キューが空の場合は通常ターンに戻り、次の解答ボタン待ちとする。</td></tr>
+          <tr><td>ホスト</td><td>現在接続中の参加者のうち、入室が最も早い参加者へホスト権限を自動移譲する。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 7.9 スコア・順位 -->
+  <section id="s79">
+    <h3 id="s79h">7.9 スコア・順位</h3>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">🏆</div>
+        <div class="ic-title">順位決定</div>
+        <div class="ic-body">全ラウンド終了時点の得点で順位付け。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🤝</div>
+        <div class="ic-title">同点</div>
+        <div class="ic-body">同点の場合は <strong>同順位</strong>でよい（タイブレークなし）。</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">📉</div>
+        <div class="ic-title">得点の下限</div>
+        <div class="ic-body">下限なし。指摘失敗等により <code>−1</code>、<code>−2</code> 等の負数を許容。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. データ -->
+  <section id="s8">
+    <h2><span class="section-num">8</span> データ・コンテンツ</h2>
+
+    <h3 id="s81">8.1 お題（ワードリスト）</h3>
+    <div class="callout info">
+      <span class="callout-icon">📚</span>
+      <div><span class="badge badge-mvp">MVP</span> サーバ側で保持する <strong>固定リスト</strong>。お題テキストは当該ターンの説明者にのみ送信。同一ゲーム内では重複出題しない。<br><span class="badge badge-future" style="margin-top:6px;display:inline-block;">将来機能</span> ユーザー独自リストの登録・選択。</div>
+    </div>
+
+    <h3 id="s82">8.2 参加者プロフィール</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>データ</th><th>形式</th><th>タイミング</th></tr></thead>
+        <tbody>
+          <tr><td>プレイヤーネーム</td><td>文字列（最大 32 コードポイント）</td><td>入室時に必須入力</td></tr>
+          <tr><td>手描きアイコン</td><td>256×256 PNG（最大 100KB）。白背景・黒ペンのみの正方形キャンバスから書き出し</td><td>入室後に編集・確定（空白でも可）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);">セッション内で全員の画面に同期。MVP ではロビー中のアイコン更新をリアルタイム反映。ゲーム開始後は固定。</p>
+  </section>
+
+  <!-- 9. 非機能・技術方針 -->
+  <section id="s9">
+    <h2><span class="section-num">9</span> 非機能・技術方針（概要）</h2>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>項目</th><th>方針</th></tr></thead>
+        <tbody>
+          <tr><td>同期</td><td>セッション型: 1 ルーム = 1 ゲーム、全員が同一状態を参照するリアルタイム同期。</td></tr>
+          <tr><td>クライアント</td><td>Web（PC・スマホ）。各人 1 端末を基本とした UI。</td></tr>
+          <tr><td>音声</td><td>本アプリは通話を提供しない。Discord 等は利用者が別途利用する。</td></tr>
+          <tr><td>認証・永続化</td><td>MVP ではアカウント認証は必須としない。<code>participant_token</code> による匿名参加・再接続。</td></tr>
+          <tr><td>手描きアイコン</td><td>Canvas API 等による描画、タッチ／ポインタ対応（スマホ・PC）。画像の転送サイズに上限あり。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="s91">技術スタック（MVP 決定済み）</h3>
+    <div class="card-grid">
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <div class="ic-title">フロントエンド</div>
+        <div class="ic-body">Next.js / React / TypeScript</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        </div>
+        <div class="ic-title">バックエンド</div>
+        <div class="ic-body">Fastify / TypeScript</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">⚡</div>
+        <div class="ic-title">リアルタイム</div>
+        <div class="ic-body">Socket.IO</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-icon">🗃️</div>
+        <div class="ic-title">DB / ORM</div>
+        <div class="ic-body">PostgreSQL / Prisma</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. 未確定・要検討 -->
+  <section id="s10">
+    <h2><span class="section-num">10</span> 未確定・要検討</h2>
+
+    <h3 id="s101">10.1 実装前に確定したい項目</h3>
+    <div class="callout success">
+      <span class="callout-icon">✅</span>
+      <div>現時点では <strong>該当なし</strong>（正解時の加点は 7.7 で <strong>両者加点</strong> に確定済み）。</div>
+    </div>
+
+    <h3 id="s102">10.2 説明者の正誤操作が長時間ない場合</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>状態</th><th>仕様</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-mvp">MVP</span></td><td>自動タイムアウトは行わない。説明者は 7.5.1 のスキップでターンを進められる。</td></tr>
+          <tr><td><span class="badge badge-future">将来</span></td><td>アラート表示や自動不正解等を検討。</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 id="s103">10.3 その他（必要に応じて追記）</h3>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>項目</th><th>検討内容</th></tr></thead>
+        <tbody>
+          <tr><td>指摘・投票と説明タイマー</td><td>将来の説明タイマー導入時の一時停止等。</td></tr>
+          <tr><td>手描きアイコンの不適切表現</td><td>不適切な描画が行われた場合の運用・通報・非表示などの扱い。</td></tr>
+          <tr><td>ルーム管理操作</td><td>キック、強制終了、一時停止などの有無。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 11. 改訂履歴 -->
+  <section id="s11">
+    <h2><span class="section-num">11</span> 改訂履歴</h2>
+    <div class="card" style="padding:0 20px;">
+      <div class="revision-entry">
+        <div class="revision-date">2025-03-22</div>
+        <div class="revision-text">初版（対話に基づくドラフト）</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2025-03-22</div>
+        <div class="revision-text">解答キュー・時間制限・ホスト・同順位、投票同票案、得点比較を追記</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2025-03-22</div>
+        <div class="revision-text">ターンを採用。1ラウンド = 全員が1回ずつ説明者（N ターン）、用語・第7章を整合</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2025-03-22</div>
+        <div class="revision-text">プレイヤーネーム・手描きアイコンのプロフィール仕様追記、省力化を将来機能として整理</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2026-03-22</div>
+        <div class="revision-text">ライフ制を将来機能化。指摘ボタンを排他ロック（解答はキュー）に変更</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2026-03-22</div>
+        <div class="revision-text">指摘後に是認・否認フロー追加。同票は否決。説明時間・時間切れを将来機能化</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2026-03-22</div>
+        <div class="revision-text">正解時は解答者・説明者の両者 +1pt に確定。手描きアイコンは入室後に編集・確定に変更</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2026-04-26</div>
+        <div class="revision-text">MVP の開始人数、ターン終了、スキップ、投票確定、再接続、解答キュー、お題秘匿、負の得点、プロフィール編集範囲を確定。将来機能に投票時間を追加</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2026-04-26</div>
+        <div class="revision-text">MVP 本文と将来機能を分離。技術スタックを決定し詳細の正本を 02_architecture.md に整理</div>
+      </div>
+      <div class="revision-entry">
+        <div class="revision-date">2026-05-10</div>
+        <div class="revision-text">HTML を要件正本化。リンク、切断時挙動、投票保留解除、参加方法、解答キュー空状態、手描きアイコン仕様、プレイヤーネーム正規化、章番号を整理</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#eef2ff',
+      primaryTextColor: '#1e293b',
+      primaryBorderColor: '#4f46e5',
+      lineColor: '#94a3b8',
+      secondaryColor: '#f1f5f9',
+      tertiaryColor: '#fef3c7',
+      fontSize: '13px'
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+      nodeSpacing: 40,
+      rankSpacing: 50
+    }
+  });
+</script>
+</body>
+</html>
